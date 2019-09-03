@@ -1,1 +1,3 @@
-# bamazon
+# APP INFORMATION
+## Name
+###Bamazon

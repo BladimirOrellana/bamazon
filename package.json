@@ -1,0 +1,26 @@
+{
+  "name": "bamazon",
+  "version": "1.0.0",
+  "description": "This is an Amazon-like storefron app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BladimirOrellana/bamazon.git"
+  },
+  "author": "Bladimir orellana",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BladimirOrellana/bamazon/issues"
+  },
+  "homepage": "https://github.com/BladimirOrellana/bamazon#readme",
+  "devDependencies": {
+    "nodemon": "^1.19.1"
+  },
+  "dependencies": {
+    "inquirer": "^7.0.0",
+    "mysql": "^2.17.1"
+  }
+}

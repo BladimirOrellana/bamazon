@@ -1,8 +1,19 @@
 require('dotenv').config();
+var csv = require('csv')
+var Table = require('cli-table');
 const keys = require('./keys.js')
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 const link = mysql.createConnection(keys.database_confi)
+
+
+
+var Table = require('cli-table');
+ 
+
+
+
+
 
 let viewAs = process.argv[2]
 let productId = process.argv[3]
@@ -23,17 +34,23 @@ if(err){
 }else{
     console.log("These are The Products We Have In Stock")
     for (var i = 0; i<res.length; i++){
-        console.log
-(
-`
- Category: ${res[i].department_name}
- Product Name: ${res[i].product_name}
- Price: $${res[i].price}
- In-Stock: ${res[i].stock_quantity}
- Item Id: ${res[i].item_id}
+
+        // instantiate
+var table = new Table({
+    head: ['id','Category', 'item','Price','In-stock']
+  , colWidths: [10, 20, 20, 20,20]
+});
  
-`
-)
+// table is an Array, so you can `push`, `unshift`, `splice` and friends
+table.push(
+    [`${res[i].item_id}`, `${res[i].department_name}`,`${res[i].product_name}`,`$${res[i].price}`,`${res[i].stock_quantity}`]
+  
+);
+ 
+console.log(table.toString());
+
+      
+  
     }
 }
 
@@ -44,7 +61,7 @@ if(err){
 
 }
 
-const prompt = ()=>{
+const initialScreen = ()=>{
     let count =0;
     setTimeout(()=>{
         inquirer.prompt([{
@@ -55,7 +72,7 @@ const prompt = ()=>{
         }
         
     ]).then((answerId)=>{
-        link.query('SELECT * FROM `products` WHERE `item_id` ='+answerId.getId,(err,res,fields)=>{
+        link.query('SELECT * FROM `products` WHERE `item_id` = ?',[answerId.getId],(err,res,fields)=>{
             if(err){
                 console.log('Error')
             }else{
@@ -63,16 +80,19 @@ const prompt = ()=>{
                 if(res[i].stock_quantity <= 2){
                     console.log("Hurry, Items Left "+res[i].stock_quantity)
                 }
-                 console.log
-         (
-         `
-          Item Id: ${res[i].item_id}
-          Category: ${res[i].department_name}
-          Product Name: ${res[i].product_name}
-          Price: $${res[i].price}
-          In-Stock: ${res[i].stock_quantity}
-         `
-         )
+                        // instantiate
+var tableGetProductId = new Table({
+    head: ['id','Category', 'item','Price','In-stock']
+  , colWidths: [10, 20, 20, 20,20]
+});
+ 
+// table is an Array, so you can `push`, `unshift`, `splice` and friends
+tableGetProductId.push(
+    [`${res[i].item_id}`, `${res[i].department_name}`,`${res[i].product_name}`,`$${res[i].price}`,`${res[i].stock_quantity}`]
+  
+);
+ 
+console.log(tableGetProductId.toString());
              }
             
              setTimeout(()=>{
@@ -84,23 +104,70 @@ const prompt = ()=>{
                     }
                 ]).then((answerQuantity)=>{
                     count = answerQuantity.getQuantity;
-                    link.query('SELECT `stock_quantity` FROM `products` WHERE `item_id` ='+answerId.getId,(err,res,fields)=>{
+                    link.query('SELECT * FROM `products` WHERE `item_id` = ?',[answerId.getId],(err,res,fields)=>{
                         if(err){
                             console.log(err)
                         }else{
 
                             for (var i = 0; i<res.length; i++){
                                 let sold = res[i].stock_quantity - count
-                                //    console.log('In Stock: '+res[i].stock_quantity)
-                                //    console.log('Costumer is Buying: '+count)
-                                //    console.log('Updated: '+sold)
-                                link.query("UPDATE `products` SET `stock_quantity` = "+sold+" WHERE `item_id` = "+answerId.getId,(err,res,fields)=>{
-                                    if(err){
-                                        console.log(err)
-                                    }else{
-                                        console.log('Inserted')
-                                    }
+                              if(sold < count){
+                                  console.log(`We are sorry but we have ${res[i].stock_quantity} ${res[i].product_name} left`)
+                              }else{
+                                link.query("UPDATE `products` SET ? WHERE ?",
+                                [{
+                                    stock_quantity: sold
+
+                                },
+                            {
+                                item_id: answerId.getId
+
+                            }],(err,res,fields)=>{
+                                console.log('Processing Please Wait...')
+                                    setTimeout(()=>{
+                                        
+                                        if(err){
+                                            console.log(err)
+                                        }else{
+                                            link.query('SELECT * FROM `products` WHERE `item_id` = ?',[answerId.getId],(err,res,fields)=>{
+                                                for (var i = 0; i<res.length; i++){
+                                                                           // instantiate
+var tableReceipt = new Table({
+    head: ['Quantity','Description', 'Unit Price','Amount']
+  , colWidths: [10, 20, 20, 20]
+});
+ 
+// table is an Array, so you can `push`, `unshift`, `splice` and friends
+tableReceipt.push(
+    [`${count}`, `${res[i].product_name}`,`${res[i].price}`,`$${res[i].price*count}`]
+  
+);
+console.log(
+`
+    Thank you.
+          RECEIPT
+          Bamazon
+          2234 Sunset st
+          Palo Alto, CA 94356
+          United Estates
+`
+    );
+console.log(tableReceipt.toString());
+console.log(
+    `
+      Come back soon.
+    `
+        );
+                                            
+                                                }
+
+                                            })
+                                            
+                                        }
+
+                                    },3000)
                                 })
+                              }
                     
                             }
                         }
@@ -117,8 +184,7 @@ const prompt = ()=>{
     },500)
 
 }
-// showProducts()
-// prompt()
+
 
 
 let fillInventory = (fill,id)=>{
@@ -143,13 +209,21 @@ let fillInventory = (fill,id)=>{
 
 switch(viewAs){
     case 'buyer':
-        showProducts();
-        prompt();
+            initialScreen();
+            showProducts();
+
         break;
     case 'fill':
         fillInventory(productId,fillQuantity);
         break;
         default:
-            console.log("Welcome to bamazon")
+            console.log(
+                `Welcome to bamazon Please Chose one of this options: 
+                If You are a buyer Please Insert
+                node index.js buyer
+                If You are a Manager Please Insert
+                node index.js fill id 3
+                `
+                )
 
 }
